@@ -1,6 +1,8 @@
 # -vibecode-_interactive_shopping_list
 I've created a beautiful, interactive BBQ chicken shopping list builder!
 
+Link: https://vibecode-grocery-list.my.canva.site/
+ 
 I've created a beautiful, interactive BBQ chicken shopping list builder! Here's what it does:
 * 🍗 Dynamic Portions - Adjust servings from 1-20 people using the +/- buttons or quick presets (2, 4, 6, 8, or 12 people)
 * ✅ Interactive Checklist - Tap any ingredient to check it off as you shop, with smooth animations
