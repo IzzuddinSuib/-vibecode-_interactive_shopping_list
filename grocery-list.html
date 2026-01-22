@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BBQ Chicken Shopping List</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@400;600;700&amp;family=DM+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    .font-display { font-family: 'Bitter', serif; }
+    .font-body { font-family: 'DM Sans', sans-serif; }
+    
+    .ingredient-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .ingredient-card:hover {
+      transform: translateY(-2px);
+    }
+    .ingredient-card.checked {
+      opacity: 0.6;
+    }
+    .ingredient-card.checked .ingredient-name {
+      text-decoration: line-through;
+    }
+    
+    .portion-btn {
+      transition: all 0.2s ease;
+    }
+    .portion-btn:hover:not(.active) {
+      transform: scale(1.05);
+    }
+    .portion-btn.active {
+      transform: scale(1.1);
+    }
+    
+    .quantity-badge {
+      animation: pop 0.3s ease;
+    }
+    @keyframes pop {
+      0% { transform: scale(0.8); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    
+    .flame-icon {
+      animation: flicker 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .progress-ring {
+      transition: stroke-dashoffset 0.5s ease;
+    }
+    
+    .checkmark {
+      stroke-dasharray: 50;
+      stroke-dashoffset: 50;
+      transition: stroke-dashoffset 0.3s ease;
+    }
+    .ingredient-card.checked .checkmark {
+      stroke-dashoffset: 0;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full font-body">
+  <div id="app-wrapper" class="h-full w-full overflow-auto" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);">
+   <div class="max-w-2xl mx-auto px-4 py-8"><!-- Header -->
+    <header class="text-center mb-8">
+     <div class="inline-flex items-center gap-3 mb-4">
+      <svg class="w-10 h-10 flame-icon" viewbox="0 0 24 24" fill="none"><path d="M12 2C12 2 7 7 7 12C7 14.5 8.5 17 12 17C15.5 17 17 14.5 17 12C17 7 12 2 12 2Z" fill="#FF6B35" /> <path d="M12 6C12 6 9 9 9 12C9 13.5 10 15 12 15C14 15 15 13.5 15 12C15 9 12 6 12 6Z" fill="#FFB347" /> <path d="M12 10C12 10 11 11 11 12C11 12.5 11.5 13 12 13C12.5 13 13 12.5 13 12C13 11 12 10 12 10Z" fill="#FFE5B4" />
+      </svg>
+      <h1 id="main-title" class="font-display text-3xl md:text-4xl font-bold text-white">BBQ Chicken</h1>
+     </div>
+     <p id="subtitle" class="text-amber-200/80 text-lg">Shopping List Builder</p>
+    </header><!-- Portion Selector -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/10">
+     <div class="flex items-center justify-between mb-4"><span class="text-white font-medium">Servings</span>
+      <div class="flex items-center gap-2"><button id="decrease-btn" class="portion-btn w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 flex items-center justify-center font-bold text-xl">−</button> <span id="portion-display" class="text-3xl font-display font-bold text-amber-400 w-16 text-center">4</span> <button id="increase-btn" class="portion-btn w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 flex items-center justify-center font-bold text-xl">+</button>
+      </div>
+     </div>
+     <div class="flex gap-2 flex-wrap justify-center"><button class="portion-preset portion-btn px-4 py-2 rounded-full text-sm font-medium bg-white/5 text-white/70 hover:bg-amber-500/20 hover:text-amber-400 transition-all" data-portion="2">2 people</button> <button class="portion-preset portion-btn px-4 py-2 rounded-full text-sm font-medium bg-amber-500 text-white active" data-portion="4">4 people</button> <button class="portion-preset portion-btn px-4 py-2 rounded-full text-sm font-medium bg-white/5 text-white/70 hover:bg-amber-500/20 hover:text-amber-400 transition-all" data-portion="6">6 people</button> <button class="portion-preset portion-btn px-4 py-2 rounded-full text-sm font-medium bg-white/5 text-white/70 hover:bg-amber-500/20 hover:text-amber-400 transition-all" data-portion="8">Party (8)</button> <button class="portion-preset portion-btn px-4 py-2 rounded-full text-sm font-medium bg-white/5 text-white/70 hover:bg-amber-500/20 hover:text-amber-400 transition-all" data-portion="12">Feast (12)</button>
+     </div>
+    </div><!-- Progress -->
+    <div class="flex items-center justify-between mb-6 px-2">
+     <div class="flex items-center gap-3">
+      <div class="relative w-12 h-12">
+       <svg class="w-12 h-12 -rotate-90"><circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.1)" stroke-width="4" fill="none" /> <circle id="progress-circle" class="progress-ring" cx="24" cy="24" r="20" stroke="#FF6B35" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="125.6" />
+       </svg><span id="progress-percent" class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">0%</span>
+      </div>
+      <div>
+       <p class="text-white font-medium"><span id="checked-count">0</span> of <span id="total-count">0</span> items</p>
+       <p class="text-white/50 text-sm">checked off</p>
+      </div>
+     </div><button id="clear-all" class="text-amber-400/70 hover:text-amber-400 text-sm font-medium transition-colors">Clear all ✓</button>
+    </div><!-- Ingredients List -->
+    <div id="ingredients-container" class="space-y-3"><!-- Ingredients will be populated by JS -->
+    </div><!-- Footer Tips -->
+    <div class="mt-8 p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
+     <div class="flex gap-3"><span class="text-2xl">💡</span>
+      <div>
+       <p class="text-amber-200 font-medium mb-1">Pro Tip</p>
+       <p class="text-white/60 text-sm">Marinate chicken for at least 4 hours (overnight is best!) for maximum flavor penetration.</p>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      main_title: 'BBQ Chicken',
+      subtitle: 'Shopping List Builder',
+      font_family: 'Bitter',
+      font_size: 16,
+      background_color: '#1a1a2e',
+      surface_color: '#ffffff1a',
+      text_color: '#ffffff',
+      primary_action_color: '#FF6B35',
+      secondary_action_color: '#FFB347'
+    };
+
+    let config = { ...defaultConfig };
+    let currentPortions = 4;
+    const basePortions = 4;
+
+    const ingredients = [
+      { id: 1, name: 'Chicken thighs (bone-in)', baseQty: 2, unit: 'lbs', category: 'protein', emoji: '🍗' },
+      { id: 2, name: 'BBQ sauce', baseQty: 1, unit: 'cup', category: 'sauce', emoji: '🥫' },
+      { id: 3, name: 'Olive oil', baseQty: 3, unit: 'tbsp', category: 'oils', emoji: '🫒' },
+      { id: 4, name: 'Garlic cloves', baseQty: 4, unit: 'cloves', category: 'aromatics', emoji: '🧄' },
+      { id: 5, name: 'Smoked paprika', baseQty: 2, unit: 'tsp', category: 'spices', emoji: '🌶️' },
+      { id: 6, name: 'Brown sugar', baseQty: 2, unit: 'tbsp', category: 'sweetener', emoji: '🍯' },
+      { id: 7, name: 'Apple cider vinegar', baseQty: 2, unit: 'tbsp', category: 'acid', emoji: '🍎' },
+      { id: 8, name: 'Onion powder', baseQty: 1, unit: 'tsp', category: 'spices', emoji: '🧅' },
+      { id: 9, name: 'Black pepper', baseQty: 1, unit: 'tsp', category: 'spices', emoji: '🫚' },
+      { id: 10, name: 'Salt', baseQty: 1.5, unit: 'tsp', category: 'seasoning', emoji: '🧂' },
+      { id: 11, name: 'Cayenne pepper', baseQty: 0.5, unit: 'tsp', category: 'spices', emoji: '🔥' },
+      { id: 12, name: 'Fresh rosemary', baseQty: 2, unit: 'sprigs', category: 'herbs', emoji: '🌿' }
+    ];
+
+    let checkedItems = new Set();
+
+    function formatQuantity(qty) {
+      if (qty === Math.floor(qty)) return qty.toString();
+      const fractions = {
+        0.25: '¼', 0.5: '½', 0.75: '¾',
+        0.33: '⅓', 0.67: '⅔',
+        0.125: '⅛', 0.375: '⅜', 0.625: '⅝', 0.875: '⅞'
+      };
+      const whole = Math.floor(qty);
+      const decimal = qty - whole;
+      const closestFraction = Object.keys(fractions).reduce((prev, curr) => 
+        Math.abs(curr - decimal) < Math.abs(prev - decimal) ? curr : prev
+      );
+      if (Math.abs(closestFraction - decimal) < 0.1) {
+        return whole ? `${whole} ${fractions[closestFraction]}` : fractions[closestFraction];
+      }
+      return qty.toFixed(1);
+    }
+
+    function calculateQuantity(baseQty) {
+      return (baseQty / basePortions) * currentPortions;
+    }
+
+    function renderIngredients() {
+      const container = document.getElementById('ingredients-container');
+      container.innerHTML = ingredients.map(ing => {
+        const qty = calculateQuantity(ing.baseQty);
+        const isChecked = checkedItems.has(ing.id);
+        return `
+          <div class="ingredient-card ${isChecked ? 'checked' : ''} bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 cursor-pointer flex items-center gap-4" data-id="${ing.id}">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl" style="background: ${config.surface_color}">
+              ${ing.emoji}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="ingredient-name font-medium truncate" style="color: ${config.text_color}">${ing.name}</p>
+              <p class="text-sm" style="color: ${config.secondary_action_color}">${ing.category}</p>
+            </div>
+            <div class="quantity-badge px-3 py-1 rounded-full font-bold text-sm whitespace-nowrap" style="background: ${config.primary_action_color}20; color: ${config.primary_action_color}">
+              ${formatQuantity(qty)} ${ing.unit}
+            </div>
+            <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isChecked ? 'border-green-400 bg-green-400' : 'border-white/30'}">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                <path class="checkmark" d="M5 13l4 4L19 7" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.ingredient-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const id = parseInt(card.dataset.id);
+          if (checkedItems.has(id)) {
+            checkedItems.delete(id);
+          } else {
+            checkedItems.add(id);
+          }
+          renderIngredients();
+          updateProgress();
+        });
+      });
+
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const total = ingredients.length;
+      const checked = checkedItems.size;
+      const percent = Math.round((checked / total) * 100);
+      const circumference = 125.6;
+      const offset = circumference - (percent / 100) * circumference;
+
+      document.getElementById('progress-circle').style.strokeDashoffset = offset;
+      document.getElementById('progress-percent').textContent = `${percent}%`;
+      document.getElementById('checked-count').textContent = checked;
+      document.getElementById('total-count').textContent = total;
+    }
+
+    function updatePortionDisplay() {
+      document.getElementById('portion-display').textContent = currentPortions;
+      document.querySelectorAll('.portion-preset').forEach(btn => {
+        const portion = parseInt(btn.dataset.portion);
+        if (portion === currentPortions) {
+          btn.classList.add('active', 'bg-amber-500', 'text-white');
+          btn.classList.remove('bg-white/5', 'text-white/70');
+        } else {
+          btn.classList.remove('active', 'bg-amber-500', 'text-white');
+          btn.classList.add('bg-white/5', 'text-white/70');
+        }
+      });
+    }
+
+    function applyStyles() {
+      const wrapper = document.getElementById('app-wrapper');
+      wrapper.style.background = `linear-gradient(135deg, ${config.background_color} 0%, ${adjustColor(config.background_color, 20)} 50%, ${config.background_color} 100%)`;
+      
+      document.getElementById('main-title').style.fontFamily = `${config.font_family}, serif`;
+      document.getElementById('main-title').style.fontSize = `${config.font_size * 2}px`;
+      document.getElementById('subtitle').style.fontSize = `${config.font_size}px`;
+    }
+
+    function adjustColor(hex, amount) {
+      const num = parseInt(hex.replace('#', ''), 16);
+      const r = Math.min(255, Math.max(0, (num >> 16) + amount));
+      const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amount));
+      const b = Math.min(255, Math.max(0, (num & 0x0000FF) + amount));
+      return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
+    }
+
+    // Event Listeners
+    document.getElementById('increase-btn').addEventListener('click', () => {
+      if (currentPortions < 20) {
+        currentPortions++;
+        updatePortionDisplay();
+        renderIngredients();
+      }
+    });
+
+    document.getElementById('decrease-btn').addEventListener('click', () => {
+      if (currentPortions > 1) {
+        currentPortions--;
+        updatePortionDisplay();
+        renderIngredients();
+      }
+    });
+
+    document.querySelectorAll('.portion-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentPortions = parseInt(btn.dataset.portion);
+        updatePortionDisplay();
+        renderIngredients();
+      });
+    });
+
+    document.getElementById('clear-all').addEventListener('click', () => {
+      checkedItems.clear();
+      renderIngredients();
+    });
+
+    // SDK Integration
+    async function onConfigChange(newConfig) {
+      config = { ...defaultConfig, ...newConfig };
+      document.getElementById('main-title').textContent = config.main_title || defaultConfig.main_title;
+      document.getElementById('subtitle').textContent = config.subtitle || defaultConfig.subtitle;
+      document.getElementById('main-title').style.fontFamily = `${config.font_family || defaultConfig.font_family}, serif`;
+      document.getElementById('main-title').style.fontSize = `${(config.font_size || defaultConfig.font_size) * 2}px`;
+      document.getElementById('subtitle').style.fontSize = `${config.font_size || defaultConfig.font_size}px`;
+      renderIngredients();
+    }
+
+    function mapToCapabilities(cfg) {
+      return {
+        recolorables: [
+          {
+            get: () => cfg.background_color || defaultConfig.background_color,
+            set: (value) => { cfg.background_color = value; window.elementSdk.setConfig({ background_color: value }); }
+          },
+          {
+            get: () => cfg.surface_color || defaultConfig.surface_color,
+            set: (value) => { cfg.surface_color = value; window.elementSdk.setConfig({ surface_color: value }); }
+          },
+          {
+            get: () => cfg.text_color || defaultConfig.text_color,
+            set: (value) => { cfg.text_color = value; window.elementSdk.setConfig({ text_color: value }); }
+          },
+          {
+            get: () => cfg.primary_action_color || defaultConfig.primary_action_color,
+            set: (value) => { cfg.primary_action_color = value; window.elementSdk.setConfig({ primary_action_color: value }); }
+          },
+          {
+            get: () => cfg.secondary_action_color || defaultConfig.secondary_action_color,
+            set: (value) => { cfg.secondary_action_color = value; window.elementSdk.setConfig({ secondary_action_color: value }); }
+          }
+        ],
+        borderables: [],
+        fontEditable: {
+          get: () => cfg.font_family || defaultConfig.font_family,
+          set: (value) => { cfg.font_family = value; window.elementSdk.setConfig({ font_family: value }); }
+        },
+        fontSizeable: {
+          get: () => cfg.font_size || defaultConfig.font_size,
+          set: (value) => { cfg.font_size = value; window.elementSdk.setConfig({ font_size: value }); }
+        }
+      };
+    }
+
+    function mapToEditPanelValues(cfg) {
+      return new Map([
+        ['main_title', cfg.main_title || defaultConfig.main_title],
+        ['subtitle', cfg.subtitle || defaultConfig.subtitle]
+      ]);
+    }
+
+    // Initialize
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+
+    renderIngredients();
+    updatePortionDisplay();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c1b5d08814b26f2',t:'MTc2OTA0NjIzNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
